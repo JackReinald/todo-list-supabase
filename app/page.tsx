@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { MdEdit, MdCheck, MdDelete } from "react-icons/md";
 
@@ -11,23 +12,29 @@ export default function App() {
     title: string;
     is_complete: boolean;
     created_at: Date;
+    user_id: string;
   };
 
   const [toDos, setToDos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [newTodo, setNewTodo] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const [taskToEditId, setTaskToEditId] = useState<number | null>(null);
   const [titleToEdit, setTitleToEdit] = useState<string>("");
 
 
-  const fetchTodos = async () => {
+  const fetchToDos = async (userId: string) => {
     try {
       const supabase = createClient();
       setLoading(true);
-      const { data, error } = await supabase.from("todos").select("*");
+      const { data, error } = await supabase
+        .from("todos")
+        .select("*")
+        .eq("user_id", userId); //Filters the data through userId
       if (error) throw error;
+
       setToDos(data);
     } catch (err) {
       console.error("Error fetching todos:", err);
@@ -37,10 +44,44 @@ export default function App() {
     }
   };
 
-  // Renders the tasks only once when the component is mounted.
+  // Gets the session and load the user's own activites
   useEffect(() => {
-    fetchTodos();
+    const supabase = createClient();
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setUser(data.session.user);
+        fetchToDos(data.session.user.id);
+      } else {
+        setError('Log in to see your tasks. ')
+        setLoading(false)
+      }
+    };
+    fetchUser();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
+        <p className="text-center text-gray-500 dark:text-gray-400">
+          Cargando tareas...
+        </p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
+        <p className="text-center text-gray-500 dark:text-gray-400">
+          Por favor, inicia sesión para gestionar tus tareas.
+        </p>
+      </div>
+    );
+  }
+
+
+
 
   // CRUD events
   const handleAddTodo = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -51,10 +92,10 @@ export default function App() {
       const supabase = createClient();
       const { error } = await supabase
         .from("todos")
-        .insert([{ title: newTodo, is_complete: false }]);
+        .insert([{ title: newTodo, is_complete: false, user_id: user.id }]);
       if (error) throw error;
 
-      await fetchTodos(); // Renders the UI each time a new task is added
+      await fetchToDos(user.id); // Renders the UI each time a new task is added
 
       setNewTodo("");
     } catch (err) {
@@ -73,7 +114,8 @@ export default function App() {
       const { error } = await supabase
         .from("todos")
         .update({ is_complete: !todo.is_complete })
-        .eq("id", todo.id);
+        .eq("id", todo.id)
+        .eq("user_id", user.id);
       if (error) throw error;
       setToDos(
         toDos.map((t) =>
@@ -86,7 +128,7 @@ export default function App() {
       } else {
         console.error("Error updating title: ", err);
       }
-      setError("Error al actualizar la tarea.");
+      setError("Error while updating the task.");
     }
   };
 
