@@ -68,12 +68,13 @@ export default function App() {
         setUser(data.session.user);
         fetchToDos(data.session.user.id);
       } else {
+        router.push("/")
         setError("Log in to see your tasks. ");
         setLoading(false);
       }
     };
     fetchUser();
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (
