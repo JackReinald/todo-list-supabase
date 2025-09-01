@@ -56,7 +56,7 @@ export default function App() {
       if (!data.success) {
         throw new Error(data.error || "Error desconocido al cerrar sesión");
       }
-      router.replace("/"); // Redirects the user to the login page after signing out
+      router.replace("/auth/login"); // Redirects the user to the login page after signing out
     } catch (err) {
       console.error("Error signing out:", err);
       setError("Error al cerrar sesión.");
