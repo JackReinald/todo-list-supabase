@@ -48,11 +48,15 @@ export default function App() {
 
   const handleSignOut = async () => {
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      router.replace("/"); // Redirects the user to the login page after signing out
+      const res = await fetch("/api/logout", {
+        method: "POST",
+      });
+      const data = await res.json();
 
+      if (!data.success) {
+        throw new Error(data.error || "Error desconocido al cerrar sesión");
+      }
+      router.replace("/"); // Redirects the user to the login page after signing out
     } catch (err) {
       console.error("Error signing out:", err);
       setError("Error al cerrar sesión.");
@@ -68,7 +72,7 @@ export default function App() {
         setUser(data.session.user);
         fetchToDos(data.session.user.id);
       } else {
-        router.push("/")
+        router.push("/");
         setError("Log in to see your tasks. ");
         setLoading(false);
       }
