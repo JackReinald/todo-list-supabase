@@ -111,8 +111,8 @@ Once you have have made your task the app is going to persist it using Supabase,
 
 
 
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img width="796" height="658" alt="App Interface after log-in" src="https://github.com/user-attachments/assets/f3356ac3-14bd-4680-8442-616c970d9ee4" />
+<a href="https://todo-list-supabase-amber.vercel.app/">
+  <img width="796" height="658" alt="App Interface after log-in" src="https://todo-list-supabase-amber.vercel.app/" />
   <h4 align="center">To-Do List User Interface</h4>
 </a>
 
@@ -123,8 +123,8 @@ Typebot chat link: https://typebot.co/to-do-list-tonybot-lx3cd5y
 
 
 
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img width="1053" height="858" alt="Typebot chat" src="https://github.com/user-attachments/assets/17003116-fc9f-4ccf-9a4c-d3cf10abc17f" />
+<a href="https://typebot.co/to-do-list-tonybot-lx3cd5y">
+  <img width="1053" height="858" alt="Typebot chat" src="https://typebot.co/to-do-list-tonybot-lx3cd5y" />
   <h4 align="center">Typebot chat</h4>
 </a>
 
