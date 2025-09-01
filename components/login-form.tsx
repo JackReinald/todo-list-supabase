@@ -71,7 +71,7 @@ export function LoginForm({
                 />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
+                {/* {<div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/auth/forgot-password"
@@ -79,7 +79,7 @@ export function LoginForm({
                   >
                     Forgot your password?
                   </Link>
-                </div>
+                </div>} */}
                 <Input
                   id="password"
                   type="password"
