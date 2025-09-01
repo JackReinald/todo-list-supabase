@@ -94,9 +94,46 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 
+## How does this project work?
+
+It is a simple To-Do List web app that enhances the users task with AI to remind him/her small details that forgot to mention in order to make the task more concise and specific. The AI Model utilized here is Gemini-flash to process simple text prompts.
+
+For using this, you need to be registered, so this is what you should do:
+
+1) Open the Vercel deployed To-Do List app and sign up.
+2) Verify your email to see the confirmation link that will arrive to your inbox (Check your spam folder just in case).
+3) Sign in the app with your email and password.
+4) Add the task you want
+5) Edit it if needed.
+6) Sign out.
+
+Once you have have made your task the app is going to persist it using Supabase, deleting the need of local storage to keep the data. Furthermore, the user may edit the task to complete the details that the model chose to mention, besides, if the generated task is not what was expected, it can be deleted to type a new one.
+
+
+
+<a href="https://demo-nextjs-with-supabase.vercel.app/">
+  <img width="796" height="658" alt="App Interface after log-in" src="https://github.com/user-attachments/assets/f3356ac3-14bd-4680-8442-616c970d9ee4" />
+  <h4 align="center">To-Do List User Interface</h4>
+</a>
+
+## Typebot compatible
+This app is connected to a simple typebot chat that allows the user to keep his/her tasks if previously signed up. So make sure to first register your account.
+
+Typebot chat link: https://typebot.co/to-do-list-tonybot-lx3cd5y
+
+
+
+<a href="https://demo-nextjs-with-supabase.vercel.app/">
+  <img width="1053" height="858" alt="Typebot chat" src="https://github.com/user-attachments/assets/17003116-fc9f-4ccf-9a4c-d3cf10abc17f" />
+  <h4 align="center">Typebot chat</h4>
+</a>
+
+
 ## Feedback and issues
 
 Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+
+If you want to make a comment or report any bug regarding this app, feel free to contact me at: anthonyvc.office@gmail.com
 
 ## More Supabase examples
 
