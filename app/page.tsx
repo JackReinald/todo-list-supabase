@@ -51,8 +51,7 @@ export default function App() {
       const supabase = createClient();
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      router.refresh(); // Refreshes the app, forcing the state updating 
-      router.push("/"); // Redirects the user to the login page after signing out
+      router.replace("/"); // Redirects the user to the login page after signing out
 
     } catch (err) {
       console.error("Error signing out:", err);
