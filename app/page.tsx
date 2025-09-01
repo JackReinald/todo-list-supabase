@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MdEdit, MdCheck, MdDelete } from "react-icons/md";
 
@@ -24,6 +25,7 @@ export default function App() {
   const [taskToEditId, setTaskToEditId] = useState<number | null>(null);
   const [titleToEdit, setTitleToEdit] = useState<string>("");
 
+  const router = useRouter();
 
   const fetchToDos = async (userId: string) => {
     try {
@@ -32,7 +34,7 @@ export default function App() {
       const { data, error } = await supabase
         .from("todos")
         .select("*")
-        .eq("user_id", userId); //Filters the data through userId
+        .eq("user_id", userId); // Filters the data through userId
       if (error) throw error;
 
       setToDos(data);
@@ -41,6 +43,19 @@ export default function App() {
       setError("Error al cargar las tareas.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      // Redirige al usuario a la página principal después de cerrar sesión
+      router.push("/");
+    } catch (err) {
+      console.error("Error signing out:", err);
+      setError("Error al cerrar sesión.");
     }
   };
 
@@ -53,8 +68,8 @@ export default function App() {
         setUser(data.session.user);
         fetchToDos(data.session.user.id);
       } else {
-        setError('Log in to see your tasks. ')
-        setLoading(false)
+        setError("Log in to see your tasks. ");
+        setLoading(false);
       }
     };
     fetchUser();
@@ -80,29 +95,39 @@ export default function App() {
     );
   }
 
-
-
-
   // CRUD events
   const handleAddTodo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!newTodo.trim()) return;
+    if (!newTodo.trim() || !user) return; // Makes sure there is an authenticated user prior to send
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("todos")
-        .insert([{ title: newTodo, is_complete: false, user_id: user.id }]);
-      if (error) throw error;
+      const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_PRODUCTION_URL;
+
+      if (!n8nWebhookUrl) {
+        throw new Error("N8N webhook URL is not defined.");
+      }
+
+      const response = await fetch(n8nWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newTodo,
+          user_email: user.email,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error en la llamada al webhook de n8n");
+      }
 
       await fetchToDos(user.id); // Renders the UI each time a new task is added
 
       setNewTodo("");
     } catch (err) {
       if (err instanceof Error) {
-        console.error("Error updating title: ", err.message);
+        console.error("Error adding task via webhook: ", err.message);
       } else {
-        console.error("Error updating title: ", err);
+        console.error("Error adding task via webhook: ", err);
       }
       setError("Error al agregar la tarea.");
     }
@@ -186,9 +211,17 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">
-          To-Do List
-        </h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100">
+            To-Do List
+          </h1>
+          <button
+            onClick={handleSignOut}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
 
         {error && (
           <p className="text-red-500 text-sm text-center mb-4">{error}</p>
@@ -215,71 +248,75 @@ export default function App() {
             Cargando tareas...
           </p>
         ) : (
-          <ul className="space-y-4">
-            {toDos.length === 0 ? (
-              <p className="text-center text-gray-500 dark:text-gray-400">
-                ¡No hay tareas!
-              </p>
-            ) : (
-              toDos.map((toDo) => (
-                <li
-                  key={toDo.id}
-                  className="flex items-center bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm"
-                >
-                  {taskToEditId === toDo.id ? (
-                    // Renders the input field and check button
-                    <div className="flex-grow flex items-center">
-                      <input
-                        type="text"
-                        value={titleToEdit}
-                        onChange={(e) => setTitleToEdit(e.target.value)}
-                        className="flex-grow p-2 rounded border border-gray-200"
-                      />
-                      <button
-                        onClick={() => handleSaveEdit(toDo.id)}
-                        className="ml-2 text-green-500 hover:text-green-700 transition-colors"
-                      >
-                        <MdCheck className="w-6 h-6" />
-                      </button>
-                    </div>
-                  ) : (
-                    // Renders the title of the task previous to any click
-                    <>
-                      <span
-                        onClick={() => handleToggleComplete(toDo)}
-                        className={`flex-grow cursor-pointer text-gray-800 dark:text-gray-200 transition-colors ${toDo.is_complete
-                          ? "line-through text-gray-400 dark:text-gray-500"
-                          : ""
-                          }`}
-                      >
-                        {toDo.title}
-                      </span>
-                      {toDo.is_complete ? (
-                        <span className=" text-green-500"> DONE </span>
-                      ) : (
-                        <span className="text-orange-400"> NOT DONE </span>
-                      )}
-
-                      <button
-                        onClick={() => handleEditClick(toDo)}
-                        className="ml-4 text-blue-500 hover:text-blue-700 transition-colors"
-                      >
-                        <MdEdit className="w-6 h-6" />
-                      </button>
-                    </>
-                  )}
-
-                  <button
-                    onClick={() => handleDeleteTodo(toDo.id)}
-                    className="ml-4 text-red-500 hover:text-red-700 transition-colors"
-                    aria-label={`Eliminar tarea: ${toDo.title}`}
+          <div className="max-h-80 overflow-y-auto pr-2">
+            <ul className="space-y-4">
+              {toDos.length === 0 ? (
+                <p className="text-center text-gray-500 dark:text-gray-400">
+                  ¡No hay tareas!
+                </p>
+              ) : (
+                toDos.map((toDo) => (
+                  <li
+                    key={toDo.id}
+                    className="flex items-center bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm"
                   >
-                    <MdDelete className="w-6 h-6" />
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
+                    {taskToEditId === toDo.id ? (
+                      // Renders the input field and check button
+                      <div className="flex-grow flex items-center">
+                        <textarea
+                          value={titleToEdit}
+                          onChange={(e) => setTitleToEdit(e.target.value)}
+                          className="flex-grow p-2 rounded border border-gray-200 resize-none dark:bg-gray-800 dark:text-gray-100" // Añadida la clase resize-none para evitar que el usuario lo redimensione
+                          style={{ height: "auto", minHeight: "40px" }} // Min. height
+                          rows={3}
+                        />
+                        <button
+                          onClick={() => handleSaveEdit(toDo.id)}
+                          className="ml-2 text-green-500 hover:text-green-700 transition-colors"
+                        >
+                          <MdCheck className="w-6 h-6" />
+                        </button>
+                      </div>
+                    ) : (
+                      // Renders the title of the task previous to any click
+                      <>
+                        <span
+                          onClick={() => handleToggleComplete(toDo)}
+                          className={`flex-grow cursor-pointer text-gray-800 dark:text-gray-200 transition-colors ${
+                            toDo.is_complete
+                              ? "line-through text-gray-400 dark:text-gray-500"
+                              : ""
+                          }`}
+                        >
+                          {toDo.title}
+                        </span>
+                        {toDo.is_complete ? (
+                          <span className=" text-green-500"> DONE </span>
+                        ) : (
+                          <span className="text-orange-400"> NOT DONE </span>
+                        )}
+
+                        <button
+                          onClick={() => handleEditClick(toDo)}
+                          className="ml-4 text-blue-500 hover:text-blue-700 transition-colors"
+                        >
+                          <MdEdit className="w-6 h-6" />
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      onClick={() => handleDeleteTodo(toDo.id)}
+                      className="ml-4 text-red-500 hover:text-red-700 transition-colors"
+                      aria-label={`Eliminar tarea: ${toDo.title}`}
+                    >
+                      <MdDelete className="w-6 h-6" />
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
         )}
       </div>
     </div>
